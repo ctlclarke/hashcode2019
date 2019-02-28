@@ -7,7 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alex
@@ -15,9 +17,11 @@ import java.util.List;
  */
 public class HashCode2019
 {
-	/* File to deal with —— { A = a_example, B = b_lovely_landscape, C = c_memorable_moments, D = d_pet_pictures, E = e_shiny_selfies... }. */
+	/* File to deal with —— { A = a_example, B = b_lovely_landscapes, C = c_memorable_moments, D = d_pet_pictures, E = e_shiny_selfies... }. */
 
-	private static final HashcodeFile file = HashcodeFile.A;
+	private static final HashcodeFile file = HashcodeFile.E;
+
+	private static int ITER_LIMIT = 100;
 
 	public static void main ( String[] args )
 	{
@@ -35,8 +39,170 @@ public class HashCode2019
 	private static List<Slide> getAssignment ( List<Picture> pictures )
 	{
 		List<Slide> slideAssignment = new ArrayList<Slide>();
+		Slide firstSlide, lastSlide;
 
-		return null;
+		for ( int i = 0;; i++ )
+		{
+			if ( pictures.get( i ).isHorizontal() )
+			{
+				slideAssignment.add( new HorizontalSlide( pop( pictures, i ) ) );
+				break;
+			}
+			else if ( i == pictures.size() - 1 )
+			{
+				slideAssignment.add( new VerticalSlide( pictures.get( 0 ), pictures.get( 1 ) ) );
+				pictures.remove( 0 );
+				pictures.remove( 1 );
+				break;
+			}
+		}
+
+		Picture p, p2;
+		int maxScore, newScore;
+		Slide bestSlide = null, newSlidePossibility;
+		boolean bestAtFirstSlide = false;
+
+		while ( pictures.size() > 0 )
+		{
+			System.out.println( pictures.size() );
+
+			maxScore = Integer.MIN_VALUE;
+
+			for ( int i = 0; i < pictures.size(); i++ )
+			{
+				p = pictures.get( i );
+
+				firstSlide = slideAssignment.get( 0 );
+				lastSlide = slideAssignment.get( slideAssignment.size() - 1 );
+
+				if ( p.isHorizontal() )
+				{
+					newSlidePossibility = new HorizontalSlide( p );
+
+					newScore = score( newSlidePossibility, firstSlide );
+					if ( newScore > maxScore )
+					{
+						maxScore = newScore;
+						bestSlide = newSlidePossibility;
+						bestAtFirstSlide = true;
+					}
+
+					newScore = score( newSlidePossibility, lastSlide );
+					if ( newScore > maxScore )
+					{
+						maxScore = newScore;
+						bestSlide = newSlidePossibility;
+						bestAtFirstSlide = false;
+					}
+				}
+				else if ( p.isVertical() )
+				{
+					for ( int j = i + 1; j < pictures.size(); j++ )
+					{
+						p2 = pictures.get( j );
+
+						if ( p.equals( p2 ) || p2.isHorizontal() )
+						{
+							continue;
+						}
+
+						newSlidePossibility = new VerticalSlide( p, p2 );
+
+						newScore = score( newSlidePossibility, firstSlide );
+						if ( newScore > maxScore )
+						{
+							maxScore = newScore;
+							bestSlide = newSlidePossibility;
+							bestAtFirstSlide = true;
+						}
+
+						newScore = score( newSlidePossibility, lastSlide );
+						if ( newScore > maxScore )
+						{
+							maxScore = newScore;
+							bestSlide = newSlidePossibility;
+							bestAtFirstSlide = false;
+						}
+
+						if ( j > ITER_LIMIT )
+						{
+							break;
+						}
+					}
+				}
+
+				if ( i > ITER_LIMIT )
+				{
+					break;
+				}
+
+			}
+
+			slideAssignment.add( bestAtFirstSlide ? 0 : slideAssignment.size(), bestSlide );
+
+			for ( Picture pic : bestSlide.getPictures() )
+			{
+				pictures.remove( pic );
+			}
+
+			if ( pictures.size() == 1 )
+			{
+				if ( pictures.get( 0 ).isVertical() )
+				{
+					break;
+				}
+			}
+		}
+
+		return slideAssignment;
+	}
+
+	public static Picture pop ( List<Picture> pictures, int index )
+	{
+		Picture p = pictures.get( index );
+		pictures.remove( index );
+		return p;
+	}
+
+	private static int score ( Slide s1, Slide s2 )
+	{
+		return score( s1.getTags(), s2.getTags() );
+	}
+
+	private static int score ( Set<String> tags1, Set<String> tags2 )
+	{
+		int s1 = setMinusScore( tags1, tags2 );
+		int s2 = setMinusScore( tags2, tags1 );
+
+		int score = ( tags1.size() + tags2.size() - s1 - s2 ) / 2;
+
+		score = Math.min( score, s1 );
+		score = Math.min( score, s2 );
+
+		return score;
+	}
+
+	private static int intersectionScore ( Set<String> tags1, Set<String> tags2 )
+	{
+		Set<String> tempTags = new HashSet<String>( tags1 );
+		tempTags.addAll( tags2 );
+
+		return tempTags.size();
+	}
+
+	/* Gets number of tags only in tags1 (first parameter). */
+	private static int setMinusScore ( Set<String> tags1, Set<String> tags2 )
+	{
+		int score = 0;
+
+		for ( String element : tags1 )
+		{
+			if ( !tags2.contains( element ) )
+			{
+				score += 1;
+			}
+		}
+		return score;
 	}
 
 	private static List<Picture> getInput ( HashcodeFile file )
@@ -92,7 +258,7 @@ public class HashCode2019
 	private enum HashcodeFile
 	{
 		A ( "a_example" ),
-		B ( "b_lovely_landscape" ),
+		B ( "b_lovely_landscapes" ),
 		C ( "c_memorable_moments" ),
 		D ( "d_pet_pictures" ),
 		E ( "e_shiny_selfies" );
@@ -118,16 +284,35 @@ public class HashCode2019
 
 abstract class Slide
 {
-	public String toString;
+	public abstract Set<String> getTags ();
+
+	@Override
+	public abstract String toString ();
+
+	public abstract List<Picture> getPictures ();
 }
 
 class HorizontalSlide extends Slide
 {
-	public final Picture p;
+	public final Picture		p;
+	public final Set<String>	tags;
 
 	public HorizontalSlide( Picture p )
 	{
 		this.p = p;
+		this.tags = p.tags;
+	}
+
+	@Override
+	public Set<String> getTags ()
+	{
+		return tags;
+	}
+
+	@Override
+	public List<Picture> getPictures ()
+	{
+		return Arrays.asList( p );
 	}
 
 	@Override
@@ -139,13 +324,28 @@ class HorizontalSlide extends Slide
 
 class VerticalSlide extends Slide
 {
-	public final Picture	p1;
-	public final Picture	p2;
+	public final Picture		p1;
+	public final Picture		p2;
+	public final Set<String>	tags;
 
 	public VerticalSlide( Picture p1, Picture p2 )
 	{
 		this.p1 = p1;
 		this.p2 = p2;
+		this.tags = new HashSet<String>( p1.tags );
+		this.tags.addAll( p2.tags );
+	}
+
+	@Override
+	public Set<String> getTags ()
+	{
+		return tags;
+	}
+
+	@Override
+	public List<Picture> getPictures ()
+	{
+		return Arrays.asList( p1, p2 );
 	}
 
 	@Override
@@ -159,13 +359,13 @@ class Picture
 {
 	public final int			id;
 	public final Orientation	orientation;
-	public final String[]		tags;
+	public final Set<String>	tags;
 
 	Picture( int id, Orientation orientation, String[] tags )
 	{
 		this.id = id;
 		this.orientation = orientation;
-		this.tags = tags;
+		this.tags = new HashSet<String>( Arrays.asList( tags ) );
 	}
 
 	public boolean isVertical ()
