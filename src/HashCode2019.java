@@ -5,9 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * @author Alex
@@ -15,13 +15,14 @@ import java.util.function.Supplier;
  */
 public class HashCode2019
 {
-	/* File to deal with —— { A = a_example, B = b_should_be_easy, C = c_no_hurry, D = d_metropolis, E = e_high_bonus }. */
+	/* File to deal with —— { A = a_example, B = b_lovely_landscape, C = c_memorable_moments, D = d_pet_pictures, E = e_shiny_selfies... }. */
+
 	private static final HashcodeFile file = HashcodeFile.A;
 
 	public static void main ( String[] args )
 	{
-		getInput( file );
-		List<List<Integer>> solution = getAssignment();
+		List<Picture> input = getInput( file );
+		List<List<Integer>> solution = getAssignment( input );
 		output( file, solution );
 	}
 
@@ -31,32 +32,30 @@ public class HashCode2019
 	 * @param scoreFunc The function that calculates the score of a ride for a car — used when greedily trying to assign rides to cars.
 	 * @return A list which has, indexed by the integer value of the corresponding car, the rides ids the car has been allocated.
 	 */
-	private static List<List<Integer>> getAssignment ()
+	private static List<List<Integer>> getAssignment ( List<Picture> pictures )
 	{
 		return null;
 	}
 
-	/** Get input from file. */
-	private static void getInput ( HashcodeFile file )
+	private static List<Picture> getInput ( HashcodeFile file )
 	{
-		int[] inputIntArray; /* Used to get and assign input. */
+		String[] inputLine;
+		List<Picture> pictures = new ArrayList<Picture>();
+		Orientation o;
+		String[] tags;
 
 		try ( BufferedReader br = new BufferedReader( new FileReader( file.getInputPath().toFile() ) ) )
 		{
-			/* Create lambda function to get input line as array of ints. */
-			Supplier<int[]> nextLineAsIntArray = () -> {
-				try
-				{
-					return Arrays.asList( br.readLine().trim().split( "\\s+" ) ).stream().mapToInt( Integer::parseInt ).toArray();
-				}
-				catch ( IOException e )
-				{
-					e.printStackTrace();
-				}
-				return null;
-			};
+			int N = Integer.parseInt( br.readLine() );
 
-			inputIntArray = nextLineAsIntArray.get();
+			for ( int i = 0; i < N; i++ )
+			{
+				inputLine = br.readLine().trim().split( "\\s+" );
+				o = Orientation.strToOrientation( inputLine[ 0 ] );
+				tags = Arrays.copyOfRange( inputLine, 1, inputLine.length );
+
+				pictures.add( new Picture( i, o, tags ) );
+			}
 
 			/* Input here */
 
@@ -66,6 +65,8 @@ public class HashCode2019
 			e.printStackTrace();
 			System.exit( 1 );
 		}
+
+		return pictures;
 	}
 
 	/** Output solution to file with filename given. */
@@ -73,17 +74,13 @@ public class HashCode2019
 	{
 		try ( BufferedWriter bw = new BufferedWriter( new FileWriter( file.getOutputPath().toFile() ) ) )
 		{
-			for ( List<Integer> vehicleInfo : solution )
+			bw.write( solution.size() + "\n" );
+			for ( List<Integer> slide : solution )
 			{
-				bw.write( Integer.toString( vehicleInfo.size() ) );
-				for ( int rideNum : vehicleInfo )
+				bw.write( slide.get( 0 ) );
+				if ( slide.size() > 1 )
 				{
-					bw.write( " " + Integer.toString( rideNum ) );
-				}
-
-				if ( vehicleInfo == solution.get( solution.size() - 1 ) )
-				{
-					break;
+					bw.write( " " + slide.get( 1 ) );
 				}
 				bw.write( '\n' );
 			}
@@ -97,11 +94,11 @@ public class HashCode2019
 
 	private enum HashcodeFile
 	{
-		A ( "" ),
-		B ( "" ),
-		C ( "" ),
-		D ( "" ),
-		E ( "" );
+		A ( "a_example" ),
+		B ( "b_lovely_landscape" ),
+		C ( "c_memorable_moments" ),
+		D ( "d_pet_pictures" ),
+		E ( "e_shiny_selfies" );
 
 		public String str;
 
@@ -112,12 +109,55 @@ public class HashCode2019
 
 		Path getInputPath ()
 		{
-			return Paths.get( "input", "hashcode2019", str + ".in" );
+			return Paths.get( "input", str + ".in" );
 		}
 
 		Path getOutputPath ()
 		{
-			return Paths.get( "output", "hashcode2019", str + ".output" );
+			return Paths.get( "output", str + ".output" );
+		}
+	}
+}
+
+class Picture
+{
+	public final int			id;
+	public final Orientation	orientation;
+	public final String[]		tags;
+
+	Picture( int id, Orientation orientation, String[] tags )
+	{
+		this.id = id;
+		this.orientation = orientation;
+		this.tags = tags;
+	}
+
+	public boolean isVertical ()
+	{
+		return orientation.equals( Orientation.V );
+	}
+
+	public boolean isHorizontal ()
+	{
+		return orientation.equals( Orientation.H );
+	}
+}
+
+enum Orientation
+{
+	V,
+	H;
+
+	public static Orientation strToOrientation ( String str )
+	{
+		switch ( str )
+		{
+			case "V":
+				return Orientation.V;
+			case "H":
+				return Orientation.H;
+			default:
+				return null;
 		}
 	}
 }
