@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
 
 target_compile_options(hash19 PUBLIC -std=c++17 -Wall -O3)
-#target_compile_options(hash19 PUBLIC -std=c++17 -Wall -pg)
+# target_compile_options(hash19 PUBLIC -std=c++17 -Wall -pg)
 target_link_libraries(hash19 PUBLIC pthread)
 # Use the following for profiling:
 #target_link_libraries(hash19 PUBLIC -pg)
