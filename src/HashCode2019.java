@@ -22,7 +22,7 @@ public class HashCode2019
 	public static void main ( String[] args )
 	{
 		List<Picture> input = getInput( file );
-		List<List<Integer>> solution = getAssignment( input );
+		List<Slide> solution = getAssignment( input );
 		output( file, solution );
 	}
 
@@ -32,8 +32,10 @@ public class HashCode2019
 	 * @param scoreFunc The function that calculates the score of a ride for a car — used when greedily trying to assign rides to cars.
 	 * @return A list which has, indexed by the integer value of the corresponding car, the rides ids the car has been allocated.
 	 */
-	private static List<List<Integer>> getAssignment ( List<Picture> pictures )
+	private static List<Slide> getAssignment ( List<Picture> pictures )
 	{
+		List<Slide> slideAssignment = new ArrayList<Slide>();
+
 		return null;
 	}
 
@@ -70,19 +72,14 @@ public class HashCode2019
 	}
 
 	/** Output solution to file with filename given. */
-	private static void output ( HashcodeFile file, List<List<Integer>> solution )
+	private static void output ( HashcodeFile file, List<Slide> solution )
 	{
 		try ( BufferedWriter bw = new BufferedWriter( new FileWriter( file.getOutputPath().toFile() ) ) )
 		{
 			bw.write( solution.size() + "\n" );
-			for ( List<Integer> slide : solution )
+			for ( Slide slide : solution )
 			{
-				bw.write( slide.get( 0 ) );
-				if ( slide.size() > 1 )
-				{
-					bw.write( " " + slide.get( 1 ) );
-				}
-				bw.write( '\n' );
+				bw.write( slide.toString() + '\n' );
 			}
 		}
 		catch ( IOException e )
@@ -116,6 +113,45 @@ public class HashCode2019
 		{
 			return Paths.get( "output", str + ".output" );
 		}
+	}
+}
+
+abstract class Slide
+{
+	public String toString;
+}
+
+class HorizontalSlide extends Slide
+{
+	public final Picture p;
+
+	public HorizontalSlide( Picture p )
+	{
+		this.p = p;
+	}
+
+	@Override
+	public String toString ()
+	{
+		return Integer.toString( p.id );
+	}
+}
+
+class VerticalSlide extends Slide
+{
+	public final Picture	p1;
+	public final Picture	p2;
+
+	public VerticalSlide( Picture p1, Picture p2 )
+	{
+		this.p1 = p1;
+		this.p2 = p2;
+	}
+
+	@Override
+	public String toString ()
+	{
+		return Integer.toString( p1.id ) + " " + Integer.toString( p2.id );
 	}
 }
 
